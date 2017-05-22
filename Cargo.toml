@@ -1,0 +1,16 @@
+[package]
+name = "alien"
+version = "0.1.0"
+authors = ["Nikita Lyubchich <nikita.lyubchich@gmail.com>"]
+
+[dependencies]
+# futures = "0.1.13"
+telegram-bot = "0.5.0"
+hyper = "0.10.10"
+serde = "1.0.7"
+serde_json = "1.0.2"
+clippy = {version = "*", optional = true}
+# tokio-core = "0.1.7"
+
+[features]
+default = []
