@@ -1,4 +1,4 @@
 language: rust
 rust:
   - nightly
-script: cargo clippy && cargo test && exit 1
+script: cargo install clippy && cargo build && cargo clippy && cargo test && exit 1
