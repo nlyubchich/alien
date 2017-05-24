@@ -1,2 +1,7 @@
 language: rust
-script: cargo install clippy && cargo build && cargo clippy && cargo test && exit 1
+rust:
+  - nightly
+script:
+  - cargo install clippy
+  - cargo clippy
+  - cargo test

@@ -17,12 +17,11 @@ use integrations::transmission::{do_add_torrent_action};
 use handle::{check_message,Actions};
 
 
-
 fn main() {
-
     let config = get_config();
     let api = Api::from_token(config.telegram_bot_token.as_str()).unwrap();
     let mut listener = api.listener(ListeningMethod::LongPoll(None));
+
     listener.listen(|u| {
         // If the received update contains a message...
         if let Some(m) = u.message {
