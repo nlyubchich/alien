@@ -48,3 +48,34 @@ pub fn do_add_torrent_action(config: &BotConfig, msg: &str) -> String {
     res.read_to_string(&mut status).unwrap();
     status
 }
+
+pub fn get_torrent_list_action(config: &BotConfig, _: &str) -> String {
+
+    let client = Client::new();
+
+    let json = json!({
+        "method":"torrent-get",
+        "arguments": {
+            "fields":[
+                "id","name","error","errorString","eta","isFinished","isStalled",
+                "leftUntilDone","metadataPercentComplete","peersConnected",
+                "percentDone","rateDownload","rateUpload","recheckProgress",
+                "seedRatioMode","seedRatioLimit","sizeWhenDone","status",
+                "downloadDir","uploadedEver","uploadRatio","webseedsSendingToUs"
+            ],
+        }
+    });
+
+    let mut headers = Headers::new();
+    headers.set(XTransmissionSessionId(config.transmission_session_id.clone()));
+
+    let mut res = client
+        .post(config.transmission_url.as_str())
+        .headers(headers)
+        .body(&json.to_string())
+        .send()
+        .unwrap();
+    let mut status = String::new();
+    res.read_to_string(&mut status).unwrap();
+    status
+}
