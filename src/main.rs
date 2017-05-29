@@ -16,7 +16,6 @@ use telegram_bot::{Api,ListeningMethod,ListeningAction};
 use handle::process_update;
 
 
-
 fn main() {
     let config = get_config();
     let api = Api::from_token(config.telegram_bot_token.as_str()).unwrap();
