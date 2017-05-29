@@ -14,6 +14,7 @@ mod config;
 use config::{get_config};
 use telegram_bot::{Api,ListeningMethod,ListeningAction};
 use handle::process_update;
+use integrations::IntegrationInstances;
 
 
 fn main() {
@@ -21,9 +22,11 @@ fn main() {
     let api = Api::from_token(config.telegram_bot_token.as_str()).unwrap();
     let mut listener = api.listener(ListeningMethod::LongPoll(None));
 
+    let integrations = IntegrationInstances::new(&config);
+
     listener.listen(|update| {
         if let Some(message) = update.message {
-            let response = process_update(&config, &message);
+            let response = process_update(&config, &integrations, &message);
             try!(api.send_message(
                 message.chat.id(),
                 response,

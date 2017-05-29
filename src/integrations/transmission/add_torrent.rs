@@ -1,10 +1,5 @@
-use std::io::Read;
-use hyper::Client;
-use hyper::header::Headers;
 use serde_json;
-use config::{BotConfig};
-
-use integrations::transmission::common::XTransmissionSessionId;
+use integrations::transmission::SendTransmissionRpc;
 
 enum Statuses {
     TorrentDuplicate,
@@ -28,15 +23,9 @@ struct Arguments {
 impl Arguments {
     pub fn get_argument_status(&self) -> Statuses {
         let mut status = Statuses::Unknown;
-        match self.torrent_added {
-            Some(_) => status = Statuses::TorrentAdded,
-            None => (),
-        }
-        match self.torrent_duplicate {
-            Some(_) => status = Statuses::TorrentDuplicate,
-            None => (),
-        }
-        return status;
+        if self.torrent_added.is_some() { status = Statuses::TorrentAdded }
+        if self.torrent_duplicate.is_some() { status = Statuses::TorrentDuplicate }
+        status
     }
 }
 
@@ -46,10 +35,7 @@ struct Response {
     arguments: Arguments,
 }
 
-pub fn add_torrent_action(config: &BotConfig, msg: &str) -> String {
-
-    let client = Client::new();
-
+pub fn add_torrent_action<T: SendTransmissionRpc>(client: &T, msg: &str) -> String {
     let json = json!({
       "method": "torrent-add",
       "arguments": {
@@ -58,19 +44,8 @@ pub fn add_torrent_action(config: &BotConfig, msg: &str) -> String {
       }
     });
 
-    let mut headers = Headers::new();
-    headers.set(XTransmissionSessionId(config.transmission_session_id.clone()));
-
-    let mut res = client
-        .post(config.transmission_url.as_str())
-        .headers(headers)
-        .body(&json.to_string())
-        .send()
-        .unwrap();
-
-    let mut status = String::new();
-    res.read_to_string(&mut status).unwrap();
-    let p: Response = serde_json::from_str(status.as_str()).unwrap();
+    let res = client.send_request(json.to_string());
+    let p: Response = serde_json::from_str(res.as_str()).unwrap();
 
     match p.result.as_ref() {
         "success" => {

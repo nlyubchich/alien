@@ -1,15 +1,18 @@
-use std::io::Read;
-use hyper::Client;
-use hyper::header::Headers;
 use serde_json;
-use config::{BotConfig};
 use std::ops::Mul;
 
-use integrations::transmission::common::XTransmissionSessionId;
+use integrations::transmission::SendTransmissionRpc;
 
 #[derive(Deserialize, Debug)]
 struct TorrentItem {
     name: String,
+    // Torrent._StatusStopped         = 0;
+    // Torrent._StatusCheckWait       = 1;
+    // Torrent._StatusCheck           = 2;
+    // Torrent._StatusDownloadWait    = 3;
+    // Torrent._StatusDownload        = 4;
+    // Torrent._StatusSeedWait        = 5;
+    // Torrent._StatusSeed            = 6;
     status: i64,
     #[serde(rename="percentDone")]
     percent_done: f64,
@@ -26,8 +29,7 @@ struct Response {
     arguments: Option<Arguments>,
 }
 
-pub fn get_torrent_list_action(config: &BotConfig, _: &str) -> String {
-    let client = Client::new();
+pub fn get_torrent_list_action<T: SendTransmissionRpc>(client: &T) -> String {
 
     let json = json!({
         "method":"torrent-get",
@@ -42,25 +44,19 @@ pub fn get_torrent_list_action(config: &BotConfig, _: &str) -> String {
         }
     });
 
-    let mut headers = Headers::new();
-    headers.set(XTransmissionSessionId(config.transmission_session_id.clone()));
+    let status = client.send_request(json.to_string());
 
-    let mut res = client
-        .post(config.transmission_url.as_str())
-        .headers(headers)
-        .body(&json.to_string())
-        .send()
-        .unwrap();
-    let mut status = String::new();
-
-    res.read_to_string(&mut status).unwrap();
     let p: Response = serde_json::from_str(status.as_str()).unwrap();
     match p.result.as_ref() {
         "success" => {
-            let mut result = String::from("Here is your torrents:");
+            let mut result = String::from("Here are your torrents:");
 
             for torrent in p.arguments.unwrap().torrents {
-                result += format!("\n{} - {} ({}%)", torrent.name, torrent.status, torrent.percent_done.mul(100f64)).as_str();
+                result += format!(
+                    "\n{} - {} ({}%)",
+                    torrent.name, torrent.status,
+                    torrent.percent_done.mul(100f64)
+                ).as_str();
             }
 
             result
